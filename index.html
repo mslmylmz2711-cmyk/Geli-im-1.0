@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kelime">
+<meta name="theme-color" content="#1e293b">
+<title>Kelime Uygulaması</title>
+<link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Kelime%20Uygulamas%C4%B1%22,%22short_name%22:%22Kelime%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%231e293b%22,%22theme_color%22:%22%231e293b%22}">
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(135deg, #1e293b, #334155);
+    padding: env(safe-area-inset-top) 12px env(safe-area-inset-bottom) 12px;
+  }
+  .card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 32px 24px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    text-align: center;
+  }
+  h1 { font-size: 1.3rem; margin: 0 0 4px; color: #1e293b; }
+  .sub { font-size: 0.8rem; color: #64748b; margin: 0 0 4px; }
+  .credit { font-size: 0.65rem; color: #cbd5e1; margin: 0 0 20px; font-style: italic; }
+  .buttons { display: flex; gap: 12px; margin-bottom: 24px; }
+  button {
+    flex: 1;
+    padding: 16px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    color: white;
+    transition: transform 0.1s ease, opacity 0.2s ease;
+  }
+  button:active { transform: scale(0.96); }
+  #btnA { background: #2563eb; }
+  #btnB { background: #dc2626; }
+  .result {
+    min-height: 110px;
+    border-radius: 14px;
+    background: #f1f5f9;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+  .word { font-size: 1.8rem; font-weight: 800; color: #0f172a; }
+  .meaning { font-size: 1.05rem; color: #475569; font-weight: 500; min-height: 1.4em; }
+  .placeholder { color: #94a3b8; font-size: 0.95rem; }
+  .showBtn {
+    margin-top: 4px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: #0f172a;
+    border-radius: 8px;
+  }
+  .count { margin-top: 16px; font-size: 0.7rem; color: #94a3b8; }
+  .reset {
+    margin-top: 8px;
+    background: none;
+    color: #94a3b8;
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 4px;
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>🔤 Rastgele Kelime Uygulaması</h1>
+    <p class="sub">A: İngilizce (B1–B2) &nbsp;·&nbsp; B: Almanca (A1)</p>
+    <p class="credit">Muhammet Müslüm Yılmaz tarafından yapılmıştır</p>
+    <div class="buttons">
+      <button id="btnA">A — İngilizce</button>
+      <button id="btnB">B — Almanca</button>
+    </div>
+    <div class="result" id="result">
+      <span class="placeholder">Bir kelime görmek için A veya B'ye tıkla</span>
+    </div>
+    <div class="count" id="count"></div>
+    <button class="reset" id="resetBtn">Turları sıfırla</button>
+  </div>
+
+<script>
+  const englishWords = [
+    { word: "achieve", tr: "başarmak" },
+    { word: "benefit", tr: "fayda" },
+    { word: "challenge", tr: "zorluk" },
+    { word: "confident", tr: "kendinden emin" },
+    { word: "consider", tr: "göz önünde bulundurmak" },
+    { word: "determine", tr: "belirlemek" },
+    { word: "environment", tr: "çevre" },
+    { word: "eventually", tr: "sonunda" },
+    { word: "generous", tr: "cömert" },
+    { word: "improve", tr: "geliştirmek" },
+    { word: "influence", tr: "etki" },
+    { word: "opportunity", tr: "fırsat" },
+    { word: "particular", tr: "belirli" },
+    { word: "reliable", tr: "güvenilir" },
+    { word: "require", tr: "gerektirmek" },
+    { word: "significant", tr: "önemli" },
+    { word: "struggle", tr: "mücadele etmek" },
+    { word: "suggest", tr: "önermek" },
+    { word: "tendency", tr: "eğilim" },
+    { word: "worthwhile", tr: "değerli, zahmete değer" },
+    { word: "accurate", tr: "doğru, hatasız" },
+    { word: "advantage", tr: "avantaj" },
+    { word: "ambition", tr: "hırs, tutku" },
+    { word: "anxious", tr: "endişeli" },
+    { word: "approach", tr: "yaklaşım" },
+    { word: "appropriate", tr: "uygun" },
+    { word: "assume", tr: "varsaymak" },
+    { word: "attempt", tr: "girişim, denemek" },
+    { word: "attitude", tr: "tutum" },
+    { word: "aware", tr: "farkında" },
+    { word: "behave", tr: "davranmak" },
+    { word: "belief", tr: "inanç" },
+    { word: "beneficial", tr: "yararlı" },
+    { word: "brilliant", tr: "parlak, zeki" },
+    { word: "capable", tr: "yetenekli" },
+    { word: "career", tr: "kariyer" },
+    { word: "cautious", tr: "dikkatli, temkinli" },
+    { word: "circumstance", tr: "durum, koşul" },
+    { word: "combine", tr: "birleştirmek" },
+    { word: "comment", tr: "yorum" },
+    { word: "commit", tr: "adamak, taahhüt etmek" },
+    { word: "community", tr: "topluluk" },
+    { word: "compare", tr: "karşılaştırmak" },
+    { word: "complex", tr: "karmaşık" },
+    { word: "concept", tr: "kavram" },
+    { word: "conclude", tr: "sonuca varmak" },
+    { word: "conduct", tr: "yürütmek, davranış" },
+    { word: "conflict", tr: "çatışma" },
+    { word: "consequence", tr: "sonuç" },
+    { word: "consistent", tr: "tutarlı" },
+    { word: "constant", tr: "sabit, sürekli" },
+    { word: "contribute", tr: "katkıda bulunmak" },
+    { word: "convince", tr: "ikna etmek" },
+    { word: "cooperate", tr: "işbirliği yapmak" },
+    { word: "crucial", tr: "çok önemli" },
+    { word: "curious", tr: "meraklı" },
+    { word: "decade", tr: "on yıl" },
+    { word: "declare", tr: "beyan etmek" },
+    { word: "definite", tr: "kesin" },
+    { word: "demonstrate", tr: "göstermek, kanıtlamak" },
+    { word: "deny", tr: "reddetmek, inkar etmek" },
+    { word: "desperate", tr: "çaresiz" },
+    { word: "device", tr: "cihaz" },
+    { word: "distinguish", tr: "ayırt etmek" },
+    { word: "diverse", tr: "çeşitli" },
+    { word: "efficient", tr: "verimli" },
+    { word: "eliminate", tr: "ortadan kaldırmak" },
+    { word: "emerge", tr: "ortaya çıkmak" },
+    { word: "emphasize", tr: "vurgulamak" },
+    { word: "enormous", tr: "çok büyük" },
+    { word: "ensure", tr: "sağlamak, garanti etmek" },
+    { word: "essential", tr: "gerekli, temel" },
+    { word: "estimate", tr: "tahmin etmek" },
+    { word: "evaluate", tr: "değerlendirmek" },
+    { word: "evidence", tr: "kanıt" },
+    { word: "evolve", tr: "gelişmek, evrimleşmek" },
+    { word: "exceed", tr: "aşmak, geçmek" },
+    { word: "exclude", tr: "hariç tutmak" },
+    { word: "expand", tr: "genişletmek" },
+    { word: "expose", tr: "maruz bırakmak" },
+    { word: "extreme", tr: "aşırı" },
+    { word: "factor", tr: "etken, faktör" },
+    { word: "flexible", tr: "esnek" },
+    { word: "focus", tr: "odaklanmak" },
+    { word: "frustrate", tr: "hayal kırıklığına uğratmak" },
+    { word: "gain", tr: "kazanmak" },
+    { word: "generate", tr: "üretmek, oluşturmak" },
+    { word: "genuine", tr: "gerçek, samimi" },
+    { word: "gradually", tr: "yavaş yavaş" },
+    { word: "guarantee", tr: "garanti etmek" },
+    { word: "identify", tr: "tanımlamak, belirlemek" },
+    { word: "ignore", tr: "görmezden gelmek" },
+    { word: "immediate", tr: "acil, hemen" },
+    { word: "impact", tr: "etki" },
+    { word: "imply", tr: "ima etmek" },
+    { word: "inevitable", tr: "kaçınılmaz" },
+    { word: "insist", tr: "ısrar etmek" },
+    { word: "inspire", tr: "ilham vermek" },
+    { word: "instance", tr: "örnek, durum" },
+    { word: "intend", tr: "niyetlenmek" },
+    { word: "interpret", tr: "yorumlamak" },
+    { word: "involve", tr: "içermek, dahil etmek" },
+    { word: "isolate", tr: "izole etmek" },
+    { word: "issue", tr: "konu, sorun" },
+    { word: "justify", tr: "haklı çıkarmak" },
+    { word: "launch", tr: "başlatmak, fırlatmak" },
+    { word: "likelihood", tr: "olasılık" },
+    { word: "maintain", tr: "sürdürmek, korumak" },
+    { word: "manage", tr: "yönetmek, başarmak" },
+    { word: "manipulate", tr: "manipüle etmek" },
+    { word: "measure", tr: "ölçmek" },
+    { word: "mention", tr: "bahsetmek" },
+    { word: "minimize", tr: "en aza indirmek" },
+    { word: "motivate", tr: "motive etmek" },
+    { word: "negotiate", tr: "müzakere etmek" },
+    { word: "obtain", tr: "elde etmek" },
+    { word: "obvious", tr: "açık, bariz" },
+    { word: "occur", tr: "meydana gelmek" },
+    { word: "outcome", tr: "sonuç" },
+    { word: "overcome", tr: "üstesinden gelmek" },
+    { word: "perceive", tr: "algılamak" },
+    { word: "permanent", tr: "kalıcı" },
+    { word: "persuade", tr: "ikna etmek" },
+    { word: "phenomenon", tr: "olgu, fenomen" },
+    { word: "potential", tr: "potansiyel" },
+    { word: "predict", tr: "tahmin etmek" },
+    { word: "previous", tr: "önceki" },
+    { word: "prior", tr: "önceki, öncelikli" },
+    { word: "prohibit", tr: "yasaklamak" },
+    { word: "promote", tr: "teşvik etmek, terfi ettirmek" },
+    { word: "properly", tr: "doğru şekilde" },
+    { word: "purpose", tr: "amaç" },
+    { word: "pursue", tr: "peşinden gitmek, sürdürmek" },
+    { word: "random", tr: "rastgele" },
+    { word: "range", tr: "aralık, çeşit" },
+    { word: "rare", tr: "nadir" },
+    { word: "rational", tr: "mantıklı, akılcı" },
+    { word: "react", tr: "tepki vermek" },
+    { word: "recall", tr: "hatırlamak" },
+    { word: "recognize", tr: "tanımak, fark etmek" },
+    { word: "reduce", tr: "azaltmak" },
+    { word: "reflect", tr: "yansıtmak, düşünmek" },
+    { word: "refuse", tr: "reddetmek" },
+    { word: "regard", tr: "saygı, dikkate almak" },
+    { word: "reinforce", tr: "güçlendirmek" },
+    { word: "reject", tr: "reddetmek" },
+    { word: "relevant", tr: "ilgili, alakalı" },
+    { word: "reluctant", tr: "isteksiz" },
+    { word: "remarkable", tr: "dikkat çekici" },
+    { word: "represent", tr: "temsil etmek" },
+    { word: "resolve", tr: "çözmek" },
+    { word: "resource", tr: "kaynak" },
+    { word: "restrict", tr: "kısıtlamak" },
+    { word: "reveal", tr: "ortaya çıkarmak" },
+    { word: "rough", tr: "kaba, pürüzlü" },
+    { word: "route", tr: "güzergah, yol" },
+    { word: "satisfy", tr: "tatmin etmek" },
+    { word: "scarce", tr: "kıt, az bulunur" },
+    { word: "secure", tr: "güvenli, sağlamak" },
+    { word: "seek", tr: "aramak" },
+    { word: "sensible", tr: "mantıklı" },
+    { word: "severe", tr: "şiddetli, ağır" },
+    { word: "shift", tr: "kaymak, değişim" },
+    { word: "simultaneously", tr: "eş zamanlı olarak" },
+    { word: "sophisticated", tr: "karmaşık, gelişmiş" },
+    { word: "sufficient", tr: "yeterli" },
+    { word: "surround", tr: "çevrelemek" },
+    { word: "sustain", tr: "sürdürmek" },
+    { word: "tackle", tr: "ele almak, mücadele etmek" },
+    { word: "threat", tr: "tehdit" },
+    { word: "tolerate", tr: "hoşgörmek, katlanmak" },
+    { word: "trend", tr: "eğilim, trend" },
+    { word: "ultimate", tr: "nihai" },
+    { word: "undergo", tr: "geçirmek, maruz kalmak" },
+    { word: "unique", tr: "eşsiz" },
+    { word: "vary", tr: "değişmek, çeşitlenmek" },
+    { word: "vast", tr: "geniş, engin" },
+    { word: "via", tr: "aracılığıyla" },
+    { word: "widespread", tr: "yaygın" },
+    { word: "witness", tr: "tanık olmak" }
+  ];
+
+  const germanWords = [
+    { word: "Apfel", tr: "elma" },
+    { word: "Buch", tr: "kitap" },
+    { word: "Freund", tr: "arkadaş" },
+    { word: "Haus", tr: "ev" },
+    { word: "Katze", tr: "kedi" },
+    { word: "Milch", tr: "süt" },
+    { word: "Name", tr: "isim" },
+    { word: "Schule", tr: "okul" },
+    { word: "Stadt", tr: "şehir" },
+    { word: "Tag", tr: "gün" },
+    { word: "Tisch", tr: "masa" },
+    { word: "Wasser", tr: "su" },
+    { word: "Wetter", tr: "hava durumu" },
+    { word: "Zeit", tr: "zaman" },
+    { word: "Auto", tr: "araba" },
+    { word: "Brot", tr: "ekmek" },
+    { word: "Familie", tr: "aile" },
+    { word: "Hund", tr: "köpek" },
+    { word: "Lehrer", tr: "öğretmen" },
+    { word: "Zimmer", tr: "oda" },
+    { word: "Mutter", tr: "anne" },
+    { word: "Vater", tr: "baba" },
+    { word: "Bruder", tr: "erkek kardeş" },
+    { word: "Schwester", tr: "kız kardeş" },
+    { word: "Kind", tr: "çocuk" },
+    { word: "Mann", tr: "erkek, adam" },
+    { word: "Frau", tr: "kadın" },
+    { word: "Straße", tr: "sokak" },
+    { word: "Baum", tr: "ağaç" },
+    { word: "Blume", tr: "çiçek" },
+    { word: "Sonne", tr: "güneş" },
+    { word: "Mond", tr: "ay" },
+    { word: "Stern", tr: "yıldız" },
+    { word: "Himmel", tr: "gökyüzü" },
+    { word: "Regen", tr: "yağmur" },
+    { word: "Schnee", tr: "kar" },
+    { word: "Wind", tr: "rüzgar" },
+    { word: "Sommer", tr: "yaz" },
+    { word: "Winter", tr: "kış" },
+    { word: "Frühling", tr: "ilkbahar" },
+    { word: "Herbst", tr: "sonbahar" },
+    { word: "Morgen", tr: "sabah" },
+    { word: "Abend", tr: "akşam" },
+    { word: "Woche", tr: "hafta" },
+    { word: "Jahr", tr: "yıl" },
+    { word: "Monat", tr: "ay (takvim)" },
+    { word: "Arbeit", tr: "iş" },
+    { word: "Geld", tr: "para" },
+    { word: "Essen", tr: "yemek" },
+    { word: "Trinken", tr: "içmek" },
+    { word: "Fleisch", tr: "et" },
+    { word: "Gemüse", tr: "sebze" },
+    { word: "Obst", tr: "meyve" },
+    { word: "Ei", tr: "yumurta" },
+    { word: "Käse", tr: "peynir" },
+    { word: "Zucker", tr: "şeker" },
+    { word: "Salz", tr: "tuz" },
+    { word: "Kaffee", tr: "kahve" },
+    { word: "Tee", tr: "çay" },
+    { word: "Bier", tr: "bira" },
+    { word: "Wein", tr: "şarap" },
+    { word: "Bett", tr: "yatak" },
+    { word: "Fenster", tr: "pencere" },
+    { word: "Tür", tr: "kapı" },
+    { word: "Küche", tr: "mutfak" },
+    { word: "Bad", tr: "banyo" },
+    { word: "Garten", tr: "bahçe" },
+    { word: "Zug", tr: "tren" },
+    { word: "Bus", tr: "otobüs" },
+    { word: "Flugzeug", tr: "uçak" },
+    { word: "Fahrrad", tr: "bisiklet" },
+    { word: "Krankenhaus", tr: "hastane" },
+    { word: "Arzt", tr: "doktor" },
+    { word: "Apotheke", tr: "eczane" },
+    { word: "Geschäft", tr: "dükkan" },
+    { word: "Markt", tr: "pazar" },
+    { word: "Preis", tr: "fiyat" },
+    { word: "Farbe", tr: "renk" },
+    { word: "rot", tr: "kırmızı" },
+    { word: "blau", tr: "mavi" },
+    { word: "grün", tr: "yeşil" },
+    { word: "schwarz", tr: "siyah" },
+    { word: "weiß", tr: "beyaz" },
+    { word: "gelb", tr: "sarı" },
+    { word: "groß", tr: "büyük" },
+    { word: "klein", tr: "küçük" },
+    { word: "alt", tr: "yaşlı, eski" },
+    { word: "neu", tr: "yeni" },
+    { word: "schön", tr: "güzel" },
+    { word: "gut", tr: "iyi" },
+    { word: "schlecht", tr: "kötü" },
+    { word: "schnell", tr: "hızlı" },
+    { word: "langsam", tr: "yavaş" },
+    { word: "heiß", tr: "sıcak" },
+    { word: "kalt", tr: "soğuk" },
+    { word: "Montag", tr: "pazartesi" },
+    { word: "Dienstag", tr: "salı" },
+    { word: "Mittwoch", tr: "çarşamba" },
+    { word: "Donnerstag", tr: "perşembe" },
+    { word: "Freitag", tr: "cuma" },
+    { word: "Samstag", tr: "cumartesi" },
+    { word: "Sonntag", tr: "pazar" },
+    { word: "eins", tr: "bir" },
+    { word: "zwei", tr: "iki" },
+    { word: "drei", tr: "üç" },
+    { word: "vier", tr: "dört" },
+    { word: "fünf", tr: "beş" },
+    { word: "sechs", tr: "altı" },
+    { word: "sieben", tr: "yedi" },
+    { word: "acht", tr: "sekiz" },
+    { word: "neun", tr: "dokuz" },
+    { word: "zehn", tr: "on" },
+    { word: "sprechen", tr: "konuşmak" },
+    { word: "hören", tr: "duymak, dinlemek" },
+    { word: "sehen", tr: "görmek" },
+    { word: "gehen", tr: "gitmek" },
+    { word: "kommen", tr: "gelmek" },
+    { word: "machen", tr: "yapmak" },
+    { word: "haben", tr: "sahip olmak" },
+    { word: "sein", tr: "olmak" },
+    { word: "wollen", tr: "istemek" },
+    { word: "können", tr: "yapabilmek" },
+    { word: "müssen", tr: "zorunda olmak" },
+    { word: "wissen", tr: "bilmek" },
+    { word: "denken", tr: "düşünmek" },
+    { word: "lieben", tr: "sevmek" },
+    { word: "spielen", tr: "oynamak" },
+    { word: "lernen", tr: "öğrenmek" },
+    { word: "arbeiten", tr: "çalışmak" },
+    { word: "schlafen", tr: "uyumak" },
+    { word: "kaufen", tr: "satın almak" },
+    { word: "kochen", tr: "yemek pişirmek" },
+    { word: "lesen", tr: "okumak" },
+    { word: "schreiben", tr: "yazmak" },
+    { word: "helfen", tr: "yardım etmek" },
+    { word: "fragen", tr: "sormak" },
+    { word: "antworten", tr: "cevap vermek" },
+    { word: "verstehen", tr: "anlamak" },
+    { word: "warten", tr: "beklemek" },
+    { word: "suchen", tr: "aramak" },
+    { word: "finden", tr: "bulmak" },
+    { word: "öffnen", tr: "açmak" },
+    { word: "schließen", tr: "kapatmak" },
+    { word: "beginnen", tr: "başlamak" },
+    { word: "Straßenbahn", tr: "tramvay" },
+    { word: "Freundin", tr: "kız arkadaş" },
+    { word: "Nachbar", tr: "komşu" },
+    { word: "Zeitung", tr: "gazete" },
+    { word: "Handy", tr: "cep telefonu" },
+    { word: "Computer", tr: "bilgisayar" },
+    { word: "Musik", tr: "müzik" },
+    { word: "Film", tr: "film" },
+    { word: "Sport", tr: "spor" },
+    { word: "Urlaub", tr: "tatil" }
+  ];
+
+  const resultEl = document.getElementById("result");
+  const countEl = document.getElementById("count");
+  const resetBtn = document.getElementById("resetBtn");
+
+  // Karışık havuzları takip eden diziler - kelimeler tur bitene kadar tekrar gösterilmez
+  let englishPool = [];
+  let germanPool = [];
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function refillPool(list) {
+    return shuffle(list);
+  }
+
+  function getNext(list, poolName) {
+    if (poolName === "en") {
+      if (englishPool.length === 0) englishPool = refillPool(list);
+      return englishPool.pop();
+    } else {
+      if (germanPool.length === 0) germanPool = refillPool(list);
+      return germanPool.pop();
+    }
+  }
+
+  function updateCount() {
+    countEl.textContent =
+      `İngilizce tur: ${englishWords.length - englishPool.length}/${englishWords.length} · ` +
+      `Almanca tur: ${germanWords.length - germanPool.length}/${germanWords.length}`;
+  }
+
+  function showWord(item, tag) {
+    resultEl.innerHTML = `
+      <span class="tag">${tag}</span>
+      <span class="word">${item.word}</span>
+      <span class="meaning" id="meaningText"></span>
+      <button class="showBtn" id="showMeaningBtn">Türkçesini göster</button>
+    `;
+    document.getElementById("showMeaningBtn").addEventListener("click", () => {
+      document.getElementById("meaningText").textContent = item.tr;
+      document.getElementById("showMeaningBtn").style.display = "none";
+    });
+  }
+
+  document.getElementById("btnA").addEventListener("click", () => {
+    const item = getNext(englishWords, "en");
+    showWord(item, "İngilizce (B1–B2)");
+    updateCount();
+  });
+
+  document.getElementById("btnB").addEventListener("click", () => {
+    const item = getNext(germanWords, "de");
+    showWord(item, "Almanca (A1)");
+    updateCount();
+  });
+
+  resetBtn.addEventListener("click", () => {
+    englishPool = [];
+    germanPool = [];
+    resultEl.innerHTML = '<span class="placeholder">Bir kelime görmek için A veya B\'ye tıkla</span>';
+    updateCount();
+  });
+
+  updateCount();
+</script>
+</body>
+</html>
